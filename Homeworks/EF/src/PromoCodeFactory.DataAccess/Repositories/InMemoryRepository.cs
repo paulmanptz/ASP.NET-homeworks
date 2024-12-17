@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using PromoCodeFactory.Core.Abstractions.Repositories;
 using PromoCodeFactory.Core.Domain;
@@ -27,5 +28,26 @@ namespace PromoCodeFactory.DataAccess.Repositories
         {
             return Task.FromResult(Data.FirstOrDefault(x => x.Id == id));
         }
+
+        public Task<T> GetByIdAsync(Guid id, params Expression<Func<T, object>>[] includes)
+        {
+            return Task.FromResult(Data.FirstOrDefault(x => x.Id == id));
+        }
+
+        public Task CreateNewRecordAsync(T entity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateRecordAsync(T entity)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteRecordAsync(T entity)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

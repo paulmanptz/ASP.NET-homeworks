@@ -16,8 +16,9 @@ namespace PromoCodeFactory.DataAccess.Data
                 Email = "owner@somemail.ru",
                 FirstName = "Иван",
                 LastName = "Сергеев",
-                Role = Roles.FirstOrDefault(x => x.Name == "Admin"),
-                AppliedPromocodesCount = 5
+                //Role = Roles.FirstOrDefault(x => x.Name == "Admin"),
+                AppliedPromocodesCount = 5,
+                RoleId = Roles.FirstOrDefault(x => x.Name == "Admin").Id
             },
             new Employee()
             {
@@ -25,8 +26,9 @@ namespace PromoCodeFactory.DataAccess.Data
                 Email = "andreev@somemail.ru",
                 FirstName = "Петр",
                 LastName = "Андреев",
-                Role = Roles.FirstOrDefault(x => x.Name == "PartnerManager"),
-                AppliedPromocodesCount = 10
+                //Role = Roles.FirstOrDefault(x => x.Name == "PartnerManager"),
+                AppliedPromocodesCount = 10,
+                RoleId = Roles.FirstOrDefault(x => x.Name == "PartnerManager").Id
             },
         };
 
@@ -65,11 +67,27 @@ namespace PromoCodeFactory.DataAccess.Data
             }
         };
 
+        public static IEnumerable<CustomerPreference> CustomerPreferences => new List<CustomerPreference>()
+        {
+            new CustomerPreference()
+            {
+                CustomerId = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0"),
+                PreferenceId = Guid.Parse("ef7f299f-92d7-459f-896e-078ed53ef99c")
+            },
+                        
+            new CustomerPreference()
+            {
+                CustomerId = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0"),
+                PreferenceId = Guid.Parse("c4bda62e-fc74-4256-a956-4760b3858cbd")
+            }
+        };
+        
         public static IEnumerable<Customer> Customers
         {
             get
             {
                 var customerId = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0");
+                //var customerPref = CustomerPreferences.FirstOrDefault(x => x.CustomerId == customerId);
                 var customers = new List<Customer>()
                 {
                     new Customer()
@@ -79,11 +97,17 @@ namespace PromoCodeFactory.DataAccess.Data
                         FirstName = "Иван",
                         LastName = "Петров",
                         //TODO: Добавить предзаполненный список предпочтений
+                        
+                        //CustomerPreferences = new List<CustomerPreference>(
+                        //    CustomerPreferences.FirstOrDefault(x => x.PreferenceId == Guid.Parse("c4bda62e-fc74-4256-a956-4760b3858cbd")));
+                        //CustomerPreferences = new List<CustomerPreference> { customerPref }
                     }
                 };
 
                 return customers;
             }
         }
+
+       
     }
 }
