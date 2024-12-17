@@ -51,25 +51,39 @@ namespace PromoCodeFactory.WebHost.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<EmployeeResponse>> GetEmployeeByIdAsync(Guid id)
         {
-            var employee = await _employeeRepository.GetByIdAsync(id);
+            //var employee = await _employeeRepository.GetByIdAsync(id);
+            var employee = await _employeeRepository.GetByIdAsync(id, employee => employee.Role);
 
             if (employee == null)
                 return NotFound();
 
-            var employeeModel = new EmployeeResponse()
-            {
-                Id = employee.Id,
-                Email = employee.Email,
-                Role = new RoleItemResponse()
+            var employeeModel = new EmployeeResponse();
+            //{
+            //    Id = employee.Id,
+            //    Email = employee.Email,
+            //    Role = new RoleItemResponse()
+            //    {
+            //        Name = employee.Role.Name,
+            //        Description = employee.Role.Description
+            //    },
+            //    FullName = employee.FullName,
+            //    AppliedPromocodesCount = employee.AppliedPromocodesCount
+            //};
+                employeeModel.Id = employee.Id;
+                employeeModel.Email = employee.Email;
+                employeeModel.Role = new RoleItemResponse()
                 {
+                    Id = employee.Role.Id,
                     Name = employee.Role.Name,
                     Description = employee.Role.Description
-                },
-                FullName = employee.FullName,
-                AppliedPromocodesCount = employee.AppliedPromocodesCount
-            };
+                };
+            employeeModel.FullName = employee.FullName;
+            employeeModel.AppliedPromocodesCount = employee.AppliedPromocodesCount;
+
 
             return employeeModel;
         }
+
+
     }
 }
