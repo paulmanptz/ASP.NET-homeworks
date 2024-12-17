@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using PromoCodeFactory.Core.Abstractions.Repositories;
 using PromoCodeFactory.Core.Domain.Administration;
 using PromoCodeFactory.WebHost.Models;
+
+
 
 namespace PromoCodeFactory.WebHost.Controllers
 {
@@ -15,9 +18,11 @@ namespace PromoCodeFactory.WebHost.Controllers
     [Route("api/v1/[controller]")]
     public class RolesController
     {
-        private readonly IRepository<Role> _rolesRepository;
+        //private readonly IRepository<Role> _rolesRepository;
+        private readonly IRepository2 _rolesRepository;
 
-        public RolesController(IRepository<Role> rolesRepository)
+        //public RolesController(IRepository<Role> rolesRepository)
+        public RolesController(IRepository2 rolesRepository)
         {
             _rolesRepository = rolesRepository;
         }
@@ -41,5 +46,30 @@ namespace PromoCodeFactory.WebHost.Controllers
 
             return rolesModelList;
         }
+
+        /// <summary>
+        /// Получить данные сотрудника по id
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<RoleItemResponse>> GetRoleByIdAsync(Guid id)
+        {
+            //var employee = await _employeeRepository.GetByIdAsync(id);
+            var role = await _rolesRepository.GetByIdAsync(id);
+
+            //if (role == null)
+            //    return NotFound();
+
+            var roleModel = new RoleItemResponse()
+            {
+                Id = role.Id,
+                Name = role.Name,
+                Description = role.Description
+
+            };
+
+            return roleModel;
+        }
+
     }
 }
