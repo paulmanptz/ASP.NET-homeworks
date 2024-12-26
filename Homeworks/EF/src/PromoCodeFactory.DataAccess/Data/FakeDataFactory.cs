@@ -69,17 +69,51 @@ namespace PromoCodeFactory.DataAccess.Data
         {
             get
             {
-                var customerId = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0");
+                var customer1Id = Guid.Parse("a6c8c6b1-4349-45b0-ab31-244740aaf0f0");
+                var customer2Id = Guid.Parse("b7d9d7c2-4349-45b0-ab31-244740aae1e1");
                 var customers = new List<Customer>()
                 {
                     new Customer()
                     {
-                        Id = customerId,
+                        Id = customer1Id,
                         Email = "ivan_sergeev@mail.ru",
                         FirstName = "Иван",
                         LastName = "Петров",
-                        //TODO: Добавить предзаполненный список предпочтений
+                        CustomerPreferences = new List<CustomerPreference>
+                        {
+                            new CustomerPreference()
+                            {
+                                CustomerId = customer1Id,
+                                PreferenceId = Guid.Parse("c4bda62e-fc74-4256-a956-4760b3858cbd")
+                                //Preference = Preferences.FirstOrDefault(x => x.Name == "Семья")
+                            },
+                            new CustomerPreference()
+                            {
+                                CustomerId = customer1Id,
+                                PreferenceId = Guid.Parse("ef7f299f-92d7-459f-896e-078ed53ef99c")
+                                //Preference = Preferences.FirstOrDefault(x => x.Name == "Театр")
+                            }
+
+                        }
+                    },
+                    new Customer()
+                    {
+                        Id = customer2Id,
+                        Email = "petr_vasiliev@mail.ru",
+                        FirstName = "Петр",
+                        LastName = "Васильев",
+                        CustomerPreferences = new List<CustomerPreference>
+                        {
+                            new CustomerPreference()
+                            {
+                                CustomerId = customer2Id,
+                                PreferenceId = Guid.Parse("ef7f299f-92d7-459f-896e-078ed53ef99c")
+                                //Preference = Preferences.FirstOrDefault(x => x.Name == "Театр")
+                            }
+
+                        }
                     }
+
                 };
 
                 return customers;
