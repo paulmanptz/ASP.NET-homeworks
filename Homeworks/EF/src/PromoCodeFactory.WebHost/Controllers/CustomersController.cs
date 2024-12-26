@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PromoCodeFactory.Core.Abstractions.Repositories;
+using PromoCodeFactory.Core.Domain.PromoCodeManagement;
 using PromoCodeFactory.WebHost.Models;
+using PromoCodeFactory.WebHost.Services;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PromoCodeFactory.WebHost.Controllers
@@ -10,42 +14,87 @@ namespace PromoCodeFactory.WebHost.Controllers
     /// </summary>
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class CustomersController
-        : ControllerBase
+    public class CustomersController : ControllerBase
     {
+        private readonly ICustomerService _customerService;
+
+        public CustomersController(ICustomerService service)
+        {
+            _customerService = service;
+        }
+
+
         [HttpGet]
-        public Task<ActionResult<CustomerShortResponse>> GetCustomersAsync()
+        public async Task<ActionResult<CustomerShortResponse>> GetCustomersAsync()
         {
-            //TODO: Добавить получение списка клиентов
-            throw new NotImplementedException();
+            return Ok(await _customerService.GetCustomersAsync());
         }
 
+        /// <summary>
+        /// получить информацию по конкретному клиенту 
+        /// </summary>
+        /// <param name="id">ИД клиента</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         [HttpGet("{id}")]
-        public Task<ActionResult<CustomerResponse>> GetCustomerAsync(Guid id)
+        public async Task<ActionResult<CustomerResponse>> GetCustomerAsync(Guid id)
         {
-            //TODO: Добавить получение клиента вместе с выданными ему промомкодами
-            throw new NotImplementedException();
+            var model = await _customerService.GetCustomerAsync(id);
+            if (model == null)
+                return NotFound();
+            else
+                return Ok(model);
         }
 
+        /// <summary>
+        /// Создать нового клиента
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         [HttpPost]
-        public Task<IActionResult> CreateCustomerAsync(CreateOrEditCustomerRequest request)
+        public async Task<IActionResult> CreateCustomerAsync(CreateOrEditCustomerRequest request)
         {
-            //TODO: Добавить создание нового клиента вместе с его предпочтениями
-            throw new NotImplementedException();
+            var result = await _customerService.CreateCustomerAsync(request);
+            if (result)
+                return Ok("Created");
+            else
+                return BadRequest("Customer preference not found");
         }
 
+        /// <summary>
+        /// Изменить данные клиента
+        /// </summary>
+        /// <param name="id">Ид клиент</param>
+        /// <param name="request">новый экземпляр данных клиента</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         [HttpPut("{id}")]
-        public Task<IActionResult> EditCustomersAsync(Guid id, CreateOrEditCustomerRequest request)
+        public async Task<IActionResult> EditCustomersAsync(Guid id, CreateOrEditCustomerRequest request)
         {
-            //TODO: Обновить данные клиента вместе с его предпочтениями
-            throw new NotImplementedException();
+            var result = await _customerService.EditCustomersAsync(id, request);
+            if (result)
+                return Ok("Updated");
+            else
+                return BadRequest("Customer or customer preference not found");
+
         }
 
+        /// <summary>
+        /// Удалить клиента
+        /// </summary>
+        /// <param name="id">Ид клиента</param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         [HttpDelete]
-        public Task<IActionResult> DeleteCustomer(Guid id)
+        public async Task<IActionResult> DeleteCustomer(Guid id)
         {
-            //TODO: Удаление клиента вместе с выданными ему промокодами
-            throw new NotImplementedException();
+            var result = await _customerService.DeleteCustomer(id);
+            if (result)
+                return Ok("Deleted");
+            else
+                return NotFound();
+
         }
     }
 }
