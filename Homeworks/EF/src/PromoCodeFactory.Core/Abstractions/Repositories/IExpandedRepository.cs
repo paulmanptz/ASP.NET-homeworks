@@ -13,7 +13,8 @@ namespace PromoCodeFactory.Core.Abstractions.Repositories
     {
         public Task CreateNewRecordAsync(T entity);
         public Task UpdateRecordAsync(T entity);
-        public Task DeleteRecordAsync(T entity);    
+        public Task DeleteRecordAsync(T entity);
+        public Task DeleteRecordsAsync(List<T> entities);
     }
 
 }

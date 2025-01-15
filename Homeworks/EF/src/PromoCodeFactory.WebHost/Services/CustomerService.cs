@@ -52,6 +52,24 @@ namespace PromoCodeFactory.WebHost.Services
                 LastName = customer.LastName,
                 Email = customer.Email,
             };
+
+            var promoCodeList = new List<PromoCodeShortResponse>();
+            foreach (PromoCode promoCode in customer.Promocodes)
+            {
+                var promoCodeShort = new PromoCodeShortResponse()
+                {
+                    Id = promoCode.Id,
+                    Code = promoCode.Code,
+                    ServiceInfo = promoCode.ServiceInfo,
+                    BeginDate = promoCode.BeginDate.ToString(),
+                    EndDate = promoCode.EndDate.ToString(),
+                    PartnerName = promoCode.PartnerName,
+                };
+                promoCodeList.Add(promoCodeShort);
+            }
+
+            model.PromoCodes = promoCodeList;
+
             return model;
 
         }
@@ -153,6 +171,9 @@ namespace PromoCodeFactory.WebHost.Services
             var customer = await _customerRepository.GetByIdAsync(id);
             if (customer == null)
                 return false;
+
+            _promoCodeRepository.DeleteRecordsAsync(customer.Promocodes);
+
             await _customerRepository.DeleteRecordAsync(customer);
             return true;
         }

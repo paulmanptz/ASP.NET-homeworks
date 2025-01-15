@@ -61,5 +61,9 @@ namespace PromoCodeFactory.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
+        Task IExpandedRepository<Customer>.DeleteRecordsAsync(List<Customer> entities)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

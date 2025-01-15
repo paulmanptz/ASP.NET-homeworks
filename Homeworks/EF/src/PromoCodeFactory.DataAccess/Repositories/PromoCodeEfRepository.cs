@@ -26,9 +26,18 @@ namespace PromoCodeFactory.DataAccess.Repositories
             await _context.SaveChangesAsync();
         }
 
-        Task IExpandedRepository<PromoCode>.DeleteRecordAsync(PromoCode entity)
+        public async Task DeleteRecordAsync(PromoCode entity)
         {
-            throw new NotImplementedException();
+            _context.Set<PromoCode>().Remove(entity);
+            await _context.SaveChangesAsync();
+
+        }
+
+        public async Task DeleteRecordsAsync(List<PromoCode> entities)
+        {
+            _context.Set<PromoCode>().RemoveRange(entities);
+            await _context.SaveChangesAsync();
+
         }
 
         async Task<IEnumerable<PromoCode>> IRepository<PromoCode>.GetAllAsync()
