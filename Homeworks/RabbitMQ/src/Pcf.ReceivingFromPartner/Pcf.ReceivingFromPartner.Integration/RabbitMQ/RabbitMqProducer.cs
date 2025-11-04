@@ -20,37 +20,24 @@ namespace Pcf.ReceivingFromPartner.Integration.RabbitMQ
                 Password = configuration["RabbitMQ:Password"]
             };
 
-            // ✅ Для v6.2.2: используем синхронное создание подключения
+            // Для v6.2.2: используем синхронное создание подключения
             _connection = factory.CreateConnection(new[] { new AmqpTcpEndpoint(factory.HostName) });
         }
 
-        public void SendMessage(object message)
+        public void SendMessage(object message, string routingKey)
         {
-            //using var channel = await _connection.CreateChannelAsync();
             using IModel channel = _connection.CreateModel();
-
-            //// Объявление очереди
-            //channel.QueueDeclare(
-            //    queue: "PcfGivingToCustomer",
-            //    durable: false,
-            //    exclusive: false,
-            //    autoDelete: false,
-            //    arguments: null);
 
             string json = JsonSerializer.Serialize(message);
             byte[] body = Encoding.UTF8.GetBytes(json);
 
-            //// Создание свойств (в v6.2.2 CreateBasicProperties() есть у канала)
-            //IBasicProperties properties = channel.CreateBasicProperties();
-            //properties.ContentType = "application/json";
-
             // Отправка — используем стандартный BasicPublishAsync без generic
             channel.BasicPublish(
                 exchange: "Promocodes",
-                routingKey: "PcfRkCust",
+                routingKey: routingKey,
                 mandatory: false,
                 null,//basicProperties: properties,
-                body: body // ✅ Передаём byte[], не ReadOnlyMemory<byte>
+                body: body // Передаём byte[], не ReadOnlyMemory<byte>
             );
 
             Console.WriteLine($"Pcf sent event: {message}");

@@ -2,6 +2,6 @@
 {
     public interface IRabbitMqProducer
     {
-        void SendMessage(object message);
+        void SendMessage(object message, string routingKey);
     }
 }

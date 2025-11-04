@@ -18,23 +18,6 @@ namespace Pcf.ReceivingFromPartner.Integration
             _producer = producer;
         }
 
-        //public async Task GivePromoCodeToCustomer(PromoCode promoCode)
-        //{
-        //    var dto = new GivePromoCodeToCustomerDto()
-        //    {
-        //        PartnerId = promoCode.Partner.Id,
-        //        BeginDate = promoCode.BeginDate.ToShortDateString(),
-        //        EndDate = promoCode.EndDate.ToShortDateString(),
-        //        PreferenceId = promoCode.PreferenceId,
-        //        PromoCode = promoCode.Code,
-        //        ServiceInfo = promoCode.ServiceInfo,
-        //        PartnerManagerId = promoCode.PartnerManagerId
-        //    };
-
-        //    var response = await _httpClient.PostAsJsonAsync("api/v1/promocodes", dto);
-
-        //    response.EnsureSuccessStatusCode();
-        //}
         public void GivePromoCodeToCustomer(PromoCode promoCode)
         {
             GivePromoCodeToCustomerDto dto = new GivePromoCodeToCustomerDto()
@@ -48,10 +31,7 @@ namespace Pcf.ReceivingFromPartner.Integration
                 PartnerManagerId = promoCode.PartnerManagerId
             };
 
-            _producer.SendMessage(dto);
-            //HttpResponseMessage response = await _httpClient.PostAsJsonAsync("api/v1/promocodes", dto);
-
-            //response.EnsureSuccessStatusCode();
+            _producer.SendMessage(dto, "PcfRkCust");
         }
 
     }

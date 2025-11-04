@@ -2,6 +2,7 @@
 using Pcf.ReceivingFromPartner.Core.Abstractions.Gateways;
 using Pcf.ReceivingFromPartner.Core.Abstractions.Repositories;
 using Pcf.ReceivingFromPartner.Core.Domain;
+using Pcf.ReceivingFromPartner.Integration.RabbitMQ;
 using Pcf.ReceivingFromPartner.WebHost.Mappers;
 using Pcf.ReceivingFromPartner.WebHost.Models;
 using System;
@@ -23,19 +24,22 @@ namespace Pcf.ReceivingFromPartner.WebHost.Controllers
         private readonly IRepository<Preference> _preferencesRepository;
         private readonly INotificationGateway _notificationGateway;
         private readonly IGivingPromoCodeToCustomerGateway _givingPromoCodeToCustomerGateway;
-        private readonly IAdministrationGateway _administrationGateway;
+        //private readonly IAdministrationGateway _administrationGateway;
+        private readonly IRabbitMqProducer _rabbitMqProducer;
 
         public PartnersController(IRepository<Partner> partnersRepository,
             IRepository<Preference> preferencesRepository,
             INotificationGateway notificationGateway,
             IGivingPromoCodeToCustomerGateway givingPromoCodeToCustomerGateway,
-            IAdministrationGateway administrationGateway)
+            IRabbitMqProducer rabbitMqProducer
+            /*IAdministrationGateway administrationGateway*/)
         {
             _partnersRepository = partnersRepository;
             _preferencesRepository = preferencesRepository;
             _notificationGateway = notificationGateway;
             _givingPromoCodeToCustomerGateway = givingPromoCodeToCustomerGateway;
-            _administrationGateway = administrationGateway;
+            //_administrationGateway = administrationGateway;
+            _rabbitMqProducer = rabbitMqProducer;
         }
 
         /// <summary>
@@ -340,7 +344,7 @@ namespace Pcf.ReceivingFromPartner.WebHost.Controllers
 
             if (request.PartnerManagerId.HasValue)
             {
-                await _administrationGateway.NotifyAdminAboutPartnerManagerPromoCode(request.PartnerManagerId.Value);
+                _rabbitMqProducer.SendMessage(request.PartnerManagerId.Value, "PcfRkAdm");
             }
 
             return CreatedAtAction(nameof(GetPartnerPromoCodeAsync),

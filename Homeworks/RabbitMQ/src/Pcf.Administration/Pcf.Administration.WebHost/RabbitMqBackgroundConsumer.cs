@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Pcf.GivingToCustomer.Core.Abstractions.Repositories;
-using Pcf.GivingToCustomer.Core.Domain;
-using Pcf.GivingToCustomer.Core.PromocodeService;
-using Pcf.ReceivingFromPartner.Integration.Dto;
+using Pcf.Administration.Core;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -13,7 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Pcf.GivingToCustomer.WebHost
+namespace Pcf.Administration.WebHost
 {
     public class RabbitMqBackgroundConsumer : BackgroundService
     {
@@ -32,7 +29,7 @@ namespace Pcf.GivingToCustomer.WebHost
         {
             ConnectToRabbitMq(stoppingToken);
 
-            RegisterConsumer("Promocodes", "QueueForCustomers", "PcfRkCust");
+            RegisterConsumer("Promocodes", "QueueForAdministration", "PcfRkAdm");
 
             try
             {
@@ -47,6 +44,7 @@ namespace Pcf.GivingToCustomer.WebHost
                 _connection?.Close();
             }
         }
+
 
         private void ConnectToRabbitMq(CancellationToken stoppingToken)
         {
@@ -65,6 +63,7 @@ namespace Pcf.GivingToCustomer.WebHost
 
             Console.WriteLine("Подключено к RabbitMQ");
         }
+
 
         private void RegisterConsumer(string exchangeName, string queueName, string routingKey)
         {
@@ -88,27 +87,16 @@ namespace Pcf.GivingToCustomer.WebHost
                     byte[] body = e.Body.ToArray();
                     string json = Encoding.UTF8.GetString(body);
 
-                    GivePromoCodeToCustomerDto message = JsonSerializer.Deserialize<GivePromoCodeToCustomerDto>(json);
+                    var message = JsonSerializer.Deserialize<Guid>(json);
 
-                    GivePromoCodeRequest request = new GivePromoCodeRequest
-                    {
-                        BeginDate = message.BeginDate,
-                        EndDate = message.EndDate,
-                        PreferenceId = message.PreferenceId,
-                        PromoCode = message.PromoCode,
-                        PromoCodeId = message.PromoCodeId,
-                        PartnerId = message.PartnerId,
-                        ServiceInfo = message.ServiceInfo
-                    };
 
                     // Получаем сервисы из нового scope
-                    IPromoCodeService promoCodeService = scope.ServiceProvider.GetRequiredService<IPromoCodeService>();
-                    IRepository<PromoCode> promoCodeRepository = scope.ServiceProvider.GetRequiredService<IRepository<PromoCode>>();
+                    IEmployeeService employeeService = scope.ServiceProvider.GetRequiredService<IEmployeeService>();
 
-                    PromoCode promoCode = await promoCodeService.CreatePromoCodeForPreferenceAsync(request);
-                    await promoCodeRepository.AddAsync(promoCode);
+                    await employeeService.IncrementAppliedPromocodesAsync(message);
 
-                    Console.WriteLine($"{DateTime.Now} Received: {message.PromoCode}");
+
+                    Console.WriteLine($"{DateTime.Now} Received: {message}");
 
                     _channel.BasicAck(e.DeliveryTag, multiple: false);
                 }

@@ -47,9 +47,6 @@ namespace Pcf.GivingToCustomer.WebHost
 
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-
-            //services.AddHostedService<RabbitMqBackgroundConsumer>();
-
             services.AddOpenApiDocument(options =>
             {
                 options.Title = "PromoCode Factory Giving To Customer API Doc";
