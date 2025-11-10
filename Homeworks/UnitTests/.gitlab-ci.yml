@@ -1,21 +1,83 @@
+# .gitlab-ci.yml
+
 image: docker:stable
 
 services:
   - docker:dind
 
+variables:
+  # Работа с реестром GitLab
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+  POSTGRES_DB: promocode_factory_db
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: docker
+
 before_script:
   - docker info
 
-build:
-  only:
-    - master
-  before_script:
-    - docker login registry.gitlab.com -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD}
-  script:
-    - docker build -t ${CI_REGISTRY}/${CI_PROJECT_PATH}:latest src
-    - docker push ${CI_REGISTRY}/${CI_PROJECT_PATH}:latest
-  after_script:
-    - docker logout ${CI_REGISTRY}
+stages:
+  - build
+  - deploy-local
+
+# Этап 1: Сборка образа API
+build_api:
   stage: build
-  tags: 
-    - docker
+  script:
+    - echo "Логинимся в GitLab Container Registry..."
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+    - echo "Собираем образ API из папки src..."
+    - docker build -t $IMAGE_TAG -f src/Dockerfile .
+
+    - echo "Пушим образ в registry..."
+    - docker push $IMAGE_TAG
+  only:
+    - main
+    - merge_requests
+  tags:
+    - shell  # или любой доступный раннер, главное — чтобы мог работать с Docker
+
+# Этап 2: Деплой на локальную машину через SSH
+deploy_to_local_docker:
+  stage: deploy-local
+  image: alpine:latest
+  before_script:
+    - apk add openssh-client sshpass bash
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    # Опционально: отключить проверку SSH-ключа (только для тестов!)
+    - echo "StrictHostKeyChecking no" >> ~/.ssh/config
+
+  script:
+    - echo "Подключаемся к локальной машине и запускаем приложение..."
+
+    # Выполняем команды на локальной машине через SSH
+    - sshpass -p "$LOCAL_SERVER_PASSWORD" ssh -o ConnectTimeout=30 $LOCAL_SERVER_USER@$LOCAL_SERVER_IP "
+        cd /path/to/your/project &&
+        git pull origin main &&
+
+        # Обновляем переменные окружения (если нужно)
+        sed -i 's|promocode-factory-api:latest|$IMAGE_TAG|g' compose.yml &&
+
+        # Останавливаем старые контейнеры
+        docker compose down || true &&
+
+        # Забираем новый образ
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        docker pull $IMAGE_TAG &&
+
+        # Переименовываем образ под имя из compose.yml
+        docker tag $IMAGE_TAG promocode-factory-api:latest &&
+
+        # Запускаем стек
+        docker compose up -d
+      "
+
+    - echo "Приложение успешно развернуто на локальной машине!"
+
+  environment:
+    name: local-docker
+  only:
+    - main
+  when: manual  # Чтобы можно было запускать вручную после успешной сборки
+  tags:
+    - shell
