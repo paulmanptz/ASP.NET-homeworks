@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Pcf.Administration.Core;
 using Pcf.Administration.Core.Abstractions.Repositories;
 using Pcf.Administration.Core.Domain.Administration;
 using Pcf.Administration.WebHost.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Pcf.Administration.WebHost.Controllers
 {
@@ -18,10 +19,13 @@ namespace Pcf.Administration.WebHost.Controllers
         : ControllerBase
     {
         private readonly IRepository<Employee> _employeeRepository;
+        private readonly IEmployeeService _employeeService;
 
-        public EmployeesController(IRepository<Employee> employeeRepository)
+
+        public EmployeesController(IRepository<Employee> employeeRepository, IEmployeeService employeeService)
         {
             _employeeRepository = employeeRepository;
+            _employeeService = employeeService;
         }
 
         /// <summary>
@@ -31,9 +35,9 @@ namespace Pcf.Administration.WebHost.Controllers
         [HttpGet]
         public async Task<List<EmployeeShortResponse>> GetEmployeesAsync()
         {
-            var employees = await _employeeRepository.GetAllAsync();
+            IEnumerable<Employee> employees = await _employeeRepository.GetAllAsync();
 
-            var employeesModelList = employees.Select(x =>
+            List<EmployeeShortResponse> employeesModelList = employees.Select(x =>
                 new EmployeeShortResponse()
                 {
                     Id = x.Id,
@@ -52,12 +56,12 @@ namespace Pcf.Administration.WebHost.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<EmployeeResponse>> GetEmployeeByIdAsync(Guid id)
         {
-            var employee = await _employeeRepository.GetByIdAsync(id);
+            Employee employee = await _employeeRepository.GetByIdAsync(id);
 
             if (employee == null)
                 return NotFound();
 
-            var employeeModel = new EmployeeResponse()
+            EmployeeResponse employeeModel = new EmployeeResponse()
             {
                 Id = employee.Id,
                 Email = employee.Email,
@@ -80,19 +84,13 @@ namespace Pcf.Administration.WebHost.Controllers
         /// <param name="id">Id сотрудника, например <example>451533d5-d8d5-4a11-9c7b-eb9f14e1a32f</example></param>
         /// <returns></returns>
         [HttpPost("{id:guid}/appliedPromocodes")]
-
         public async Task<IActionResult> UpdateAppliedPromocodesAsync(Guid id)
         {
-            var employee = await _employeeRepository.GetByIdAsync(id);
-
-            if (employee == null)
+            if (!await _employeeService.IncrementAppliedPromocodesAsync(id))
                 return NotFound();
-
-            employee.AppliedPromocodesCount++;
-
-            await _employeeRepository.UpdateAsync(employee);
-
-            return Ok();
+            else
+                return Ok();
         }
+
     }
 }
