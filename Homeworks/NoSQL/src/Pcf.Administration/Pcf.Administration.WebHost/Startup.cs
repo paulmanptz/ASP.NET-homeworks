@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Castle.Core.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
 using Pcf.Administration.Core.Abstractions.Repositories;
 using Pcf.Administration.DataAccess;
 using Pcf.Administration.DataAccess.Data;
 using Pcf.Administration.DataAccess.Repositories;
-using Pcf.Administration.Core.Domain.Administration;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace Pcf.Administration.WebHost
@@ -27,22 +23,34 @@ namespace Pcf.Administration.WebHost
         {
             Configuration = configuration;
         }
-        
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers().AddMvcOptions(x=> 
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+
+            services.AddControllers().AddMvcOptions(x =>
                 x.SuppressAsyncSuffixInActionNames = false);
-            services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
-            services.AddScoped<IDbInitializer, EfDbInitializer>();
-            services.AddDbContext<DataContext>(x =>
+
+            services.Configure<MongoDBSettings>(Configuration.GetSection(nameof(MongoDBSettings)));
+
+            services.AddSingleton<IMongoClient>(sp =>
             {
-                //x.UseSqlite("Filename=PromocodeFactoryAdministrationDb.sqlite");
-                x.UseNpgsql(Configuration.GetConnectionString("PromocodeFactoryAdministrationDb"));
-                x.UseSnakeCaseNamingConvention();
-                x.UseLazyLoadingProxies();
+                MongoDBSettings settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
+
+                return new MongoClient(settings.Connection);
             });
+
+            services.AddScoped(sp =>
+            {
+                IMongoClient client = sp.GetRequiredService<IMongoClient>();
+                MongoDBSettings settings = sp.GetRequiredService<IOptions<MongoDBSettings>>().Value;
+                return client.GetDatabase(settings.DatabaseName);
+            });
+
+            services.AddScoped(typeof(IRepository<>), typeof(MongoRepository<>));
+            services.AddScoped<IDbInitializer, MongoDbInitializer>();
 
             services.AddOpenApiDocument(options =>
             {
@@ -68,7 +76,7 @@ namespace Pcf.Administration.WebHost
             {
                 x.DocExpansion = "list";
             });
-            
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -77,7 +85,7 @@ namespace Pcf.Administration.WebHost
             {
                 endpoints.MapControllers();
             });
-            
+
             dbInitializer.InitializeDb();
         }
     }
